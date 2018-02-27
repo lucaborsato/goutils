@@ -41,7 +41,12 @@ func main() {
 	var images filesInfo
 	// recursively look for images and store their info
 	err = filepath.Walk(fullPath, func(path string, info os.FileInfo, err error) error {
-		path, _ = filepath.Abs(path)
+		path, err = filepath.Abs(path)
+		if err != nil {
+			err = errors.Wrapf(err, "can't get absolute path of %v", path)
+			return err
+		}
+
 		fileExt := filepath.Ext(path)
 		if fileExt == ".png" || fileExt == ".jpg" || fileExt == ".jpeg" {
 			fi, err := os.Stat(path)
@@ -76,6 +81,7 @@ func main() {
 	err = os.MkdirAll(discardPath, os.ModePerm)
 	if err != nil {
 		err = errors.Wrapf(err, "can't create folder (%v) for discarded files", discardPath)
+		log.Fatal(err)
 	}
 
 	fmt.Println("Found files to be discarded:")
@@ -87,6 +93,7 @@ func main() {
 			err = os.Rename(f.AbsPath, newPath)
 			if err != nil {
 				err = errors.Wrapf(err, "can't move %v to %v", f.Name, newPath)
+				log.Println(err)
 			}
 		}
 	}
